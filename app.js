@@ -36,7 +36,7 @@ function loadPage(page) {
   content.scrollTop = 0;
   // 调度方案页默认选中目的国清关
   if (page === 'dispatch') { setTimeout(() => selectDispatchSegment('目的国清关'), 50); }
-  // 从订单中心进入详情页时，默认打开异常工单 Tab
+  if (page === 'exception' && !STATE.aiGenerated) { setTimeout(() => startAIGeneration(), 400); }
 
 }
 
@@ -91,7 +91,6 @@ function goToDetail() {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const el = document.querySelector('[data-page="order-detail"]');
   if (el) el.classList.add('active');
-  loadPage._goToDetail = true;
   loadPage('order-detail');
 }
 

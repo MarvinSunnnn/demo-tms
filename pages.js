@@ -755,7 +755,7 @@ function renderException() {
         </div>
       </div>
     </div>
-    </div>\`;
+  `;
 }
 
 function ctxItem(label, content, highlight = false) {
@@ -767,16 +767,18 @@ function ctxItem(label, content, highlight = false) {
 }
 
 function aiModuleShell(key, title, subtitle) {
+  const done = STATE.aiGenerated;
+  const contentFns = { attribution: aiAttrContent, sop: aiSopContent, message: aiMsgContent, cost: aiCostContent };
   return `
     <div class="card" style="background:var(--bg-surface);padding:0;overflow:hidden" id="module-${key}">
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border)">
         <div class="ai-dot" style="width:6px;height:6px"></div>
         <span style="font-size:12px;font-weight:500;color:var(--text-primary)">${title}</span>
         <span style="font-size:10px;color:var(--text-muted)" id="subtitle-${key}">${subtitle}</span>
-        <span style="margin-left:auto" id="status-${key}">${badge('等待生成', 'amber')}</span>
+        <span style="margin-left:auto" id="status-${key}">${badge(done ? '已生成' : '等待生成', done ? 'blue' : 'amber')}</span>
       </div>
       <div style="padding:0 12px 12px;font-size:12px;color:var(--text-muted);min-height:40px" id="body-${key}">
-        AI 正在分析<span class="typewriter-cursor"></span>
+        ${done && contentFns[key] ? contentFns[key]() : 'AI 正在分析<span class="typewriter-cursor"></span>'}
       </div>
     </div>`;
 }
