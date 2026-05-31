@@ -1,0 +1,478 @@
+Monitoring - Claude Code Docs
+https://code.claude.com/docs/en/monitoring-usage
+
+<!DOCTYPE html>Monitoring - Claude Code Docs
+
+Skip to main content
+
+Claude Code Docs home page
+English
+
+Search...
+
+⌘KAsk Assistant
+
+Search...
+
+Navigation
+
+Usage and costs
+
+Monitoring
+
+Getting started
+
+Build with Claude Code
+
+Administration
+
+Configuration
+
+Reference
+
+Agent SDK
+
+What's New
+
+Resources
+
+Usage and costs
+
+Monitoring
+
+Copy page
+
+Learn how to enable and configure OpenTelemetry for Claude Code.
+
+Copy page
+
+Documentation Index
+
+Fetch the complete documentation index at: https://code.claude.com/docs/llms.txt
+
+Use this file to discover all available pages before exploring further.
+Track Claude Code usage, costs, and tool activity across your organization by exporting telemetry data through OpenTelemetry (OTel). Claude Code exports metrics as time series data via the standard metrics protocol, events via the logs/events protocol, and optionally distributed traces via the traces protocol. Configure your metrics, logs, and traces backends to match your monitoring requirements.
+
+​
+
+Quick start
+
+Configure OpenTelemetry using environment variables:
+
+<code language="shellscript" numberOfLines="20"><span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 1. Enable telemetry</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> CLAUDE_CODE_ENABLE_TELEMETRY</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">1</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 2. Choose exporters (both are optional - configure only what you need)</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_METRICS_EXPORTER</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">otlp</span><span style="color:#6E7781;--shiki-dark:#6A9955"> # Options: otlp, prometheus, console, none</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_LOGS_EXPORTER</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">otlp</span><span style="color:#6E7781;--shiki-dark:#6A9955"> # Options: otlp, console, none</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 3. Configure OTLP endpoint (for OTLP exporter)</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_EXPORTER_OTLP_PROTOCOL</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">grpc</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_EXPORTER_OTLP_ENDPOINT</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">http</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">://</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">localhost</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">:</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">4317</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 4. Set authentication (if required)</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_EXPORTER_OTLP_HEADERS</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"Authorization=Bearer your-token"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 5. For debugging: reduce export intervals</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_METRIC_EXPORT_INTERVAL</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">10000</span><span style="color:#6E7781;--shiki-dark:#6A9955"> # 10 seconds (default: 60000ms)</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_LOGS_EXPORT_INTERVAL</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">5000</span><span style="color:#6E7781;--shiki-dark:#6A9955"> # 5 seconds (default: 5000ms)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># 6. Run Claude Code</span></span>
+<span class="line"><span style="color:#953800;--shiki-dark:#DCDCAA">claude</span></span>
+</code>
+
+The default export intervals are 60 seconds for metrics and 5 seconds for logs. During setup, you may want to use shorter intervals for debugging purposes. Remember to reset these for production use.
+
+For full configuration options, see the OpenTelemetry specification.
+
+​
+
+Administrator configuration
+
+Administrators can configure OpenTelemetry settings for all users through the managed settings file. This allows for centralized control of telemetry settings across an organization. See the settings precedence for more information about how settings are applied.
+Example managed settings configuration:
+
+<code language="json" numberOfLines="10"><span class="line"><span style="color:#1F2328;--shiki-dark:#D4D4D4">{</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "env"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: {</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "CLAUDE_CODE_ENABLE_TELEMETRY"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"1"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "OTEL_METRICS_EXPORTER"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"otlp"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "OTEL_LOGS_EXPORTER"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"otlp"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "OTEL_EXPORTER_OTLP_PROTOCOL"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"grpc"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "OTEL_EXPORTER_OTLP_ENDPOINT"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"http://collector.example.com:4317"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "OTEL_EXPORTER_OTLP_HEADERS"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"Authorization=Bearer example-token"</span></span>
+<span class="line"><span style="color:#1F2328;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="color:#1F2328;--shiki-dark:#D4D4D4">}</span></span>
+</code>
+
+Managed settings can be distributed via MDM (Mobile Device Management) or other device management solutions. Environment variables defined in the managed settings file have high precedence and cannot be overridden by users.
+
+Claude Code does not pass OTEL_* environment variables to the subprocesses it spawns, including the Bash tool, hooks, MCP servers, and language servers. An OpenTelemetry-instrumented application that you run through the Bash tool does not inherit Claude Code’s exporter endpoint or headers, so set those variables directly in the command if that application needs to export its own telemetry.
+
+​
+
+Configuration details
+
+​
+
+Common configuration variables
+
+Environment VariableDescriptionExample Values
+
+CLAUDE_CODE_ENABLE_TELEMETRYEnables telemetry collection (required)1
+
+OTEL_METRICS_EXPORTERMetrics exporter types, comma-separated. Use none to disableconsole, otlp, prometheus, none
+
+OTEL_LOGS_EXPORTERLogs/events exporter types, comma-separated. Use none to disableconsole, otlp, none
+
+OTEL_EXPORTER_OTLP_PROTOCOLProtocol for OTLP exporter, applies to all signalsgrpc, http/json, http/protobuf
+
+OTEL_EXPORTER_OTLP_ENDPOINTOTLP collector endpoint for all signalshttp://localhost:4317
+
+OTEL_EXPORTER_OTLP_METRICS_PROTOCOLProtocol for metrics, overrides general settinggrpc, http/json, http/protobuf
+
+OTEL_EXPORTER_OTLP_METRICS_ENDPOINTOTLP metrics endpoint, overrides general settinghttp://localhost:4318/v1/metrics
+
+OTEL_EXPORTER_OTLP_LOGS_PROTOCOLProtocol for logs, overrides general settinggrpc, http/json, http/protobuf
+
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINTOTLP logs endpoint, overrides general settinghttp://localhost:4318/v1/logs
+
+OTEL_EXPORTER_OTLP_HEADERSAuthentication headers for OTLPAuthorization=Bearer token
+
+OTEL_METRIC_EXPORT_INTERVALExport interval in milliseconds (default: 60000)5000, 60000
+
+OTEL_LOGS_EXPORT_INTERVALLogs export interval in milliseconds (default: 5000)1000, 10000
+
+OTEL_LOG_USER_PROMPTSEnable logging of user prompt content (default: disabled)1 to enable
+
+OTEL_LOG_TOOL_DETAILSEnable logging of tool parameters and input arguments in tool events and trace span attributes: Bash commands, MCP server and tool names, skill names, and tool input. Also enables custom, plugin, and MCP command names on user_prompt events (default: disabled)1 to enable
+
+OTEL_LOG_TOOL_CONTENTEnable logging of tool input and output content in span events (default: disabled). Requires tracing. Content is truncated at 60 KB1 to enable
+
+OTEL_LOG_RAW_API_BODIESEmit the full Anthropic Messages API request and response JSON as api_request_body / api_response_body log events (default: disabled). Bodies include the entire conversation history. Enabling this implies consent to everything OTEL_LOG_USER_PROMPTS, OTEL_LOG_TOOL_DETAILS, and OTEL_LOG_TOOL_CONTENT would reveal1 for inline bodies truncated at 60 KB, or file:<dir> for untruncated bodies on disk with a body_ref pointer in the event
+
+OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCEMetrics temporality preference (default: delta). Set to cumulative if your backend expects cumulative temporalitydelta, cumulative
+
+CLAUDE_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MSInterval for refreshing dynamic headers (default: 1740000ms / 29 minutes)900000
+
+​
+
+mTLS authentication
+
+How you configure client certificates for the OTLP exporter depends on the OTLP protocol in use for that signal, set via OTEL_EXPORTER_OTLP_PROTOCOL or the per-signal override. The same configuration applies to metrics, logs, and traces.
+
+ProtocolClient certificate variablesTrust the collector’s CA with
+
+http/protobuf, http/jsonCLAUDE_CODE_CLIENT_CERT, CLAUDE_CODE_CLIENT_KEY, and optionally CLAUDE_CODE_CLIENT_KEY_PASSPHRASE. See Network configurationNODE_EXTRA_CA_CERTS
+
+grpcOTEL_EXPORTER_OTLP_CLIENT_KEY and OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE, or the per-signal variants such as OTEL_EXPORTER_OTLP_METRICS_CLIENT_KEY to use a different certificate per signalOTEL_EXPORTER_OTLP_CERTIFICATE
+
+For grpc, the OpenTelemetry SDK reads the standard OTLP variables directly, so existing configurations that set the per-signal metrics variables continue to work.
+
+​
+
+Metrics cardinality control
+
+The following environment variables control which attributes are included in metrics to manage cardinality:
+
+Environment VariableDescriptionDefault ValueExample to Disable
+
+OTEL_METRICS_INCLUDE_SESSION_IDInclude session.id attribute in metricstruefalse
+
+OTEL_METRICS_INCLUDE_VERSIONInclude app.version attribute in metricsfalsetrue
+
+OTEL_METRICS_INCLUDE_ACCOUNT_UUIDInclude user.account_uuid and user.account_id attributes in metricstruefalse
+
+OTEL_METRICS_INCLUDE_ENTRYPOINTInclude app.entrypoint attribute in metricsfalsetrue
+
+These variables help control the cardinality of metrics, which affects storage requirements and query performance in your metrics backend. Lower cardinality generally means better performance and lower storage costs but less granular data for analysis.
+
+​
+
+Traces (beta)
+
+Distributed tracing exports spans that link each user prompt to the API requests and tool executions it triggers, so you can view a full request as a single trace in your tracing backend.
+Tracing is off by default. To enable it, set both CLAUDE_CODE_ENABLE_TELEMETRY=1 and CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1, then set OTEL_TRACES_EXPORTER to choose where spans are sent. Traces reuse the common OTLP configuration for endpoint, protocol, headers, and mTLS.
+
+Environment VariableDescriptionExample Values
+
+CLAUDE_CODE_ENHANCED_TELEMETRY_BETAEnable span tracing (required). ENABLE_ENHANCED_TELEMETRY_BETA is also accepted1
+
+OTEL_TRACES_EXPORTERTraces exporter types, comma-separated. Use none to disableconsole, otlp, none
+
+OTEL_EXPORTER_OTLP_TRACES_PROTOCOLProtocol for traces, overrides OTEL_EXPORTER_OTLP_PROTOCOLgrpc, http/json, http/protobuf
+
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINTOTLP traces endpoint, overrides OTEL_EXPORTER_OTLP_ENDPOINThttp://localhost:4318/v1/traces
+
+OTEL_TRACES_EXPORT_INTERVALSpan batch export interval in milliseconds (default: 5000)1000, 10000
+
+Spans redact user prompt text, tool input details, and tool content by default. Set OTEL_LOG_USER_PROMPTS=1, OTEL_LOG_TOOL_DETAILS=1, and OTEL_LOG_TOOL_CONTENT=1 to include them.
+When tracing is active, Bash and PowerShell subprocesses automatically inherit a TRACEPARENT environment variable containing the W3C trace context of the active tool execution span. This lets any subprocess that reads TRACEPARENT parent its own spans under the same trace, enabling end-to-end distributed tracing through scripts and commands that Claude runs.
+When tracing is active and Claude Code is connected directly to the Anthropic API, each model request carries a W3C traceparent header set to the claude_code.llm_request span’s context, and the API’s traceresponse header is recorded as a span link. Together these connect Claude Code’s client-side spans to the server-side trace through any compliant intermediary. Outbound HTTP MCP requests carry traceparent the same way. The header is not sent to third-party providers.
+By default, the traceparent header on model and HTTP MCP requests is sent only when ANTHROPIC_BASE_URL is unset or points at the Anthropic API, since some proxies reject unrecognized headers. The subprocess TRACEPARENT variable is controlled by the same switch for consistency. If you run Claude Code through a custom ANTHROPIC_BASE_URL proxy and want trace context propagated, set CLAUDE_CODE_PROPAGATE_TRACEPARENT=1.
+In Agent SDK and non-interactive sessions started with -p, Claude Code also reads TRACEPARENT and TRACESTATE from its own environment when starting each interaction span. This lets an embedding process pass its active W3C trace context into the subprocess so Claude Code’s spans appear as children of the caller’s distributed trace. Interactive sessions ignore inbound TRACEPARENT to avoid accidentally inheriting ambient values from CI or container environments.
+
+​
+
+Span hierarchy
+
+Each user prompt starts a claude_code.interaction root span. API calls, tool calls, and hook executions are recorded as its children. Tool spans have two child spans of their own: one for the time spent waiting on a permission decision and one for the execution itself. When the Agent tool, or legacy Task tool, spawns a subagent, the subagent’s API and tool spans nest under the parent’s claude_code.tool span.
+
+<code language="text" numberOfLines="8"><span class="line"><span>claude_code.interaction</span></span>
+<span class="line"><span>├── claude_code.llm_request</span></span>
+<span class="line"><span>├── claude_code.hook (requires detailed beta tracing)</span></span>
+<span class="line"><span>└── claude_code.tool</span></span>
+<span class="line"><span> ├── claude_code.tool.blocked_on_user</span></span>
+<span class="line"><span> ├── claude_code.tool.execution</span></span>
+<span class="line"><span> └── (Agent tool) subagent claude_code.llm_request / claude_code.tool spans</span></span>
+<span class="line"><span></span></span></code>
+
+In Agent SDK and claude -p sessions, claude_code.interaction itself becomes a child of the caller’s span when TRACEPARENT is set in the environment.
+
+​
+
+Span attributes
+
+Every span carries the standard attributes plus a span.type attribute matching its name. The tables below list the additional attributes set on each span. The llm_request, tool.execution, and hook spans set OpenTelemetry status ERROR when they record a failure; the other spans always end with status UNSET.
+claude_code.interaction
+
+AttributeDescriptionGated by
+
+user_promptPrompt text. Value is <REDACTED> unless the gate is setOTEL_LOG_USER_PROMPTS
+
+user_prompt_lengthPrompt length in characters
+
+interaction.sequence1-based counter of interactions in this session
+
+interaction.duration_msWall-clock duration of the turn
+
+claude_code.llm_request
+
+AttributeDescriptionGated by
+
+modelModel identifier
+
+gen_ai.systemAlways anthropic. OpenTelemetry GenAI semantic convention
+
+gen_ai.request.modelSame value as model. OpenTelemetry GenAI semantic convention
+
+query_sourceSubsystem that issued the request, such as repl_main_thread or a subagent name
+
+agent_idIdentifier of the subagent or teammate that issued the request. Absent on the main session
+
+parent_agent_idIdentifier of the agent that spawned this one. Absent for the main session and for agents spawned directly from it
+
+speedfast or normal
+
+llm_request.contextinteraction, tool, or standalone depending on the parent span
+
+duration_msWall-clock duration including retries
+
+ttft_msTime to first token in milliseconds
+
+input_tokensInput token count from the API usage block
+
+output_tokensOutput token count
+
+cache_read_tokensTokens read from prompt cache
+
+cache_creation_tokensTokens written to prompt cache
+
+request_idAnthropic API request ID from the request-id response header
+
+gen_ai.response.idSame value as request_id. OpenTelemetry GenAI semantic convention
+
+client_request_idClient-generated x-client-request-id of the final attempt
+
+attemptTotal attempts made for this request
+
+successtrue or false
+
+status_codeHTTP status code when the request failed
+
+errorError message when the request failed
+
+response.has_tool_calltrue when the response contained tool-use blocks
+
+stop_reasonAPI response stop_reason, such as end_turn, tool_use, max_tokens, stop_sequence, pause_turn, or refusal
+
+gen_ai.response.finish_reasonsSame value as stop_reason, wrapped in a string array. OpenTelemetry GenAI semantic convention
+
+Each retry attempt is also recorded as a gen_ai.request.attempt span event with attempt and client_request_id attributes.
+claude_code.tool
+
+AttributeDescriptionGated by
+
+tool_nameTool name
+
+duration_msWall-clock duration including permission wait and execution
+
+result_tokensApproximate token size of the tool result
+
+agent_idIdentifier of the subagent or teammate that ran the tool. Absent on the main session
+
+parent_agent_idIdentifier of the agent that spawned this one. Absent for the main session and for agents spawned directly from it
+
+file_pathTarget file path for Read, Edit, and Write toolsOTEL_LOG_TOOL_DETAILS
+
+full_commandCommand string for the Bash toolOTEL_LOG_TOOL_DETAILS
+
+skill_nameSkill name for the Skill toolOTEL_LOG_TOOL_DETAILS
+
+subagent_typeSubagent type for the Agent tool or legacy Task toolOTEL_LOG_TOOL_DETAILS
+
+When OTEL_LOG_TOOL_CONTENT=1, this span also records a tool.output span event whose attributes contain the tool’s input and output bodies, truncated at 60 KB per attribute.
+claude_code.tool.blocked_on_user
+
+AttributeDescriptionGated by
+
+duration_msTime spent waiting for the permission decision
+
+decisionaccept or reject
+
+sourceDecision source, matching the Tool decision event
+
+claude_code.tool.execution
+
+AttributeDescriptionGated by
+
+duration_msTime spent running the tool body
+
+successtrue or false
+
+errorError category string when execution failed, such as Error:ENOENT or ShellError. Contains the full error message instead when the gate is setOTEL_LOG_TOOL_DETAILS
+
+claude_code.hook
+This span is emitted only when detailed beta tracing is active, which requires ENABLE_BETA_TRACING_DETAILED=1 and BETA_TRACING_ENDPOINT in addition to the trace exporter configuration above. In interactive CLI sessions, this also requires your organization to be allowlisted for the feature. Agent SDK and non-interactive -p sessions are not gated. It is not emitted when only CLAUDE_CODE_ENHANCED_TELEMETRY_BETA is set.
+
+AttributeDescriptionGated by
+
+hook_eventHook event type, such as PreToolUse
+
+hook_nameFull hook name, such as PreToolUse:Write
+
+num_hooksNumber of matching hook commands executed
+
+hook_definitionsJSON-serialized hook configurationOTEL_LOG_TOOL_DETAILS
+
+duration_msWall-clock duration of all matching hooks
+
+num_successCount of hooks that completed successfully
+
+num_blockingCount of hooks that returned a blocking decision
+
+num_non_blocking_errorCount of hooks that failed without blocking
+
+num_cancelledCount of hooks cancelled before completion
+
+Additional content-bearing attributes such as new_context, system_prompt_preview, user_system_prompt, tool_input, and response.model_output are emitted only when detailed beta tracing is active. They are not part of the stable span schema. user_system_prompt additionally requires OTEL_LOG_USER_PROMPTS=1. It carries only the system prompt text you provide via the systemPrompt SDK option or --system-prompt and --append-system-prompt flags, truncated at 60 KB, and is emitted once per session rather than per request.
+
+​
+
+Dynamic headers
+
+For enterprise environments that require dynamic authentication, you can configure a script to generate headers dynamically. Dynamic headers apply only to the http/protobuf and http/json protocols. The grpc exporter uses only the static OTEL_EXPORTER_OTLP_HEADERS value.
+
+​
+
+Settings configuration
+
+Add to your .claude/settings.json:
+
+<code language="json" numberOfLines="3"><span class="line"><span style="color:#1F2328;--shiki-dark:#D4D4D4">{</span></span>
+<span class="line"><span style="color:#116329;--shiki-dark:#9CDCFE"> "otelHeadersHelper"</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">: </span><span style="color:#0A3069;--shiki-dark:#CE9178">"/bin/generate_opentelemetry_headers.sh"</span></span>
+<span class="line"><span style="color:#1F2328;--shiki-dark:#D4D4D4">}</span></span>
+</code>
+
+The value can be the path to an executable file, including a path that contains spaces, or a shell command line with arguments. On Windows, the value always runs through the shell, so quote a path that contains spaces inside the JSON value.
+
+​
+
+Script requirements
+
+The script must output valid JSON with string key-value pairs representing HTTP headers:
+
+<code language="shellscript" numberOfLines="3"><span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955">#!/bin/bash</span></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># Example: Multiple headers</span></span>
+<span class="line"><span style="color:#0550AE;--shiki-dark:#DCDCAA">echo</span><span style="color:#0A3069;--shiki-dark:#CE9178"> "{</span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">Authorization</span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">: </span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">Bearer $(</span><span style="color:#953800;--shiki-dark:#DCDCAA">get-token.sh</span><span style="color:#0A3069;--shiki-dark:#CE9178">)</span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">, </span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">X-API-Key</span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">: </span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">$(</span><span style="color:#953800;--shiki-dark:#DCDCAA">get-api-key.sh</span><span style="color:#0A3069;--shiki-dark:#CE9178">)</span><span style="color:#CF222E;--shiki-dark:#D7BA7D">\"</span><span style="color:#0A3069;--shiki-dark:#CE9178">}"</span></span>
+</code>
+
+If the helper fails or prints output that doesn’t meet these requirements, Claude Code reports the error in:
+
+/doctor output
+
+The debug log, when running with --debug or after running /debug in the session
+
+stderr, in non-interactive sessions started with -p
+
+​
+
+Refresh behavior
+
+The headers helper script runs at startup and periodically thereafter to support token refresh. By default, the script runs every 29 minutes. Customize the interval with the CLAUDE_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MS environment variable.
+
+​
+
+Multi-team organization support
+
+Organizations with multiple teams or departments can add custom attributes to distinguish between different groups using the OTEL_RESOURCE_ATTRIBUTES environment variable:
+
+<code language="shellscript" numberOfLines="2"><span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># Add custom attributes for team identification</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_RESOURCE_ATTRIBUTES</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"department=engineering,team.id=platform,cost_center=eng-123"</span></span>
+</code>
+
+These custom attributes will be included in all metrics and events, allowing you to:
+
+Filter metrics by team or department
+
+Track costs per cost center
+
+Create team-specific dashboards
+
+Set up alerts for specific teams
+
+Important formatting requirements for OTEL_RESOURCE_ATTRIBUTES:The OTEL_RESOURCE_ATTRIBUTES environment variable uses comma-separated key=value pairs with strict formatting requirements:
+
+No spaces allowed: Values cannot contain spaces. For example, user.organizationName=My Company is invalid
+
+Format: Must be comma-separated key=value pairs: key1=value1,key2=value2
+
+Allowed characters: Only US-ASCII characters excluding control characters, whitespace, double quotes, commas, semicolons, and backslashes
+
+Special characters: Characters outside the allowed range must be percent-encoded
+
+Examples:
+
+<code language="shellscript" numberOfLines="9"><span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># ❌ Invalid - contains spaces</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_RESOURCE_ATTRIBUTES</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"org.name=John's Organization"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># ✅ Valid - use underscores or camelCase instead</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_RESOURCE_ATTRIBUTES</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"org.name=Johns_Organization"</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_RESOURCE_ATTRIBUTES</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"org.name=JohnsOrganization"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># ✅ Valid - percent-encode special characters if needed</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_RESOURCE_ATTRIBUTES</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0A3069;--shiki-dark:#CE9178">"org.name=John%27s%20Organization"</span></span>
+</code>
+
+Note: wrapping values in quotes doesn’t escape spaces. For example, org.name="My Company" results in the literal value "My Company" (with quotes included), not My Company.
+
+​
+
+Example configurations
+
+Set these environment variables before running claude. Each block shows a complete configuration for a different exporter or deployment scenario:
+
+<code language="shellscript" numberOfLines="40"><span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># Console debugging (1-second intervals)</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> CLAUDE_CODE_ENABLE_TELEMETRY</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">1</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_METRICS_EXPORTER</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">console</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_METRIC_EXPORT_INTERVAL</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">1000</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># OTLP/gRPC</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> CLAUDE_CODE_ENABLE_TELEMETRY</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#0550AE;--shiki-dark:#B5CEA8">1</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_METRICS_EXPORTER</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">otlp</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_EXPORTER_OTLP_PROTOCOL</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">grpc</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328;--shiki-dark:#9CDCFE"> OTEL_EXPORTER_OTLP_ENDPOINT</span><span style="color:#CF222E;--shiki-dark:#D4D4D4">=</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">http</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">://</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">localhost</span><span style="color:#1F2328;--shiki-dark:#D4D4D4">:</span><span style="color:#1F2328;--shiki-dark:#9CDCFE">4317</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6E7781;--shiki-dark:#6A9955"># Prometheus</span></span>
+<span class="line"><span style="color:#CF222E;--shiki-dark:#569CD6">export</span><span style="color:#1F2328
+
+[… truncated 53810 chars …]

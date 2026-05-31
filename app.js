@@ -218,39 +218,22 @@ function startAIGeneration() {
 }
 
 function setModuleLoading(key, title) {
-  const mod = document.getElementById(`module-${key}`);
-  if (!mod) return;
   const statusEl = document.getElementById(`status-${key}`);
   if (statusEl) statusEl.innerHTML = badge('生成中...', 'amber');
   const body = document.getElementById(`body-${key}`);
   if (body) {
-    body.classList.add('open');
-    body.querySelector('div').innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;color:var(--text-muted);font-size:12px">
-        <div class="ai-dot"></div>
-        AI 正在分析<span class="typewriter-cursor"></span>
-      </div>`;
+    body.innerHTML = 'AI 正在分析<span class="typewriter-cursor"></span>';
   }
-  if (mod) mod.classList.add('expanded');
 }
 
 function typewriterModule(key, title, subtitle, contentFn) {
-  const mod = document.getElementById(`module-${key}`);
-  if (!mod) return;
-
   const statusEl = document.getElementById(`status-${key}`);
   const subtitleEl = document.getElementById(`subtitle-${key}`);
   const body = document.getElementById(`body-${key}`);
   if (!body) return;
 
-  const contentDiv = body.querySelector('div');
-  if (!contentDiv) return;
-
-  // 生成完整 HTML
   const fullHTML = contentFn();
-
-  // 打字机效果：先渲染框架，再逐字填入第一段文字
-  contentDiv.innerHTML = '<div id="tw-target" style="min-height:40px"></div>';
+  body.innerHTML = '<div id="tw-target"></div>';
   const target = document.getElementById('tw-target');
 
   // 提取第一段可见文字（第一个卡片的 reason）
@@ -271,7 +254,7 @@ function typewriterModule(key, title, subtitle, contentFn) {
       clearInterval(timer);
       // 打字完成后，替换为完整内容
       setTimeout(() => {
-        contentDiv.innerHTML = fullHTML;
+        body.innerHTML = fullHTML;
         if (statusEl) statusEl.innerHTML = badge('已生成', 'blue');
         if (subtitleEl) subtitleEl.textContent = subtitle;
         // 进度条动画
