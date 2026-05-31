@@ -37,7 +37,7 @@ function loadPage(page) {
   // 调度方案页默认选中目的国清关
   if (page === 'dispatch') { setTimeout(() => selectDispatchSegment('目的国清关'), 50); }
   // 从订单中心进入详情页时，默认打开异常工单 Tab
-  if (page === 'order-detail' && loadPage._goToDetail) { loadPage._goToDetail = false; setTimeout(() => switchDetailTab('exception'), 200); }
+
 }
 
 // ─── 订单详情 Tab 切换 ───
