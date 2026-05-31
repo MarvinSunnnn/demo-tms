@@ -754,7 +754,8 @@ function renderException() {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>
+    <script>if(!STATE.aiGenerated)setTimeout(function(){startAIGeneration()},400)</script>\`;
 }
 
 function ctxItem(label, content, highlight = false) {
